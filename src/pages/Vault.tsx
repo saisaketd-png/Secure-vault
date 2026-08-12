@@ -9,6 +9,7 @@ import { PasswordGenerator } from '@/components/PasswordGenerator';
 import { BreachChecker } from '@/components/BreachChecker';
 import { AIChatbot } from '@/components/AIChatbot';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -288,6 +289,11 @@ export default function Vault() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      <SEO 
+        title="My Secure Vault" 
+        description="Access your encrypted passwords and secure digital vault."
+        url="/vault"
+      />
       {/* Sidebar */}
       <div className="w-64 flex-shrink-0 z-10 bg-card border-r border-border">
         <VaultSidebar

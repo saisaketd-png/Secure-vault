@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter';
 import { ArrowRight, Lock, ShieldCheck } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -101,6 +102,11 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex bg-background">
+      <SEO 
+        title={isLogin ? 'Sign In' : 'Create Free Vault'} 
+        description="Sign in to your SecureVault or create a free zero-knowledge encrypted digital vault to secure your passwords."
+        url="/auth"
+      />
       {/* Left Form Section */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 md:px-24 relative z-10 bg-background border-r border-border">
         <div className="max-w-[380px] w-full mx-auto space-y-10 py-12">
