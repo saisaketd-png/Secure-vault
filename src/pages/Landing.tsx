@@ -64,8 +64,8 @@ const Landing = () => {
       {/* Navigation */}
       <nav className="w-full max-w-7xl mx-auto px-6 h-20 flex items-center justify-between relative z-10 border-b border-border/40">
         <div className="flex items-center gap-2">
-          <div className="bg-primary/10 p-2 rounded-lg border border-primary/20">
-            <Lock className="h-5 w-5 text-primary" />
+          <div className="flex items-center justify-center p-1 border border-border/10 rounded-lg bg-background/50 backdrop-blur-sm shadow-sm">
+            <img src="/logo.png" alt="SecureVault Logo" className="h-8 w-8 object-contain" />
           </div>
           <span className="text-xl font-bold tracking-tight">SecureVault.</span>
         </div>

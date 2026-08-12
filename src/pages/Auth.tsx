@@ -112,10 +112,10 @@ export default function Auth() {
         <div className="max-w-[380px] w-full mx-auto space-y-10 py-12">
           {/* Minimalist Logo - Perfectly aligned with content */}
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-primary text-primary-foreground flex items-center justify-center">
-              <Lock className="h-4 w-4" />
+            <div className="h-10 w-10 flex items-center justify-center">
+              <img src="/logo.png" alt="SecureVault Logo" className="h-10 w-10 object-contain" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-foreground">SecureVault.</span>
+            <span className="font-bold text-2xl tracking-tight text-foreground">SecureVault.</span>
           </div>
 
           <div className="space-y-2">

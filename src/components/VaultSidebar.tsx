@@ -91,8 +91,8 @@ export function VaultSidebar({
     <div className="h-full flex flex-col bg-card border-r border-border">
       <div className="p-5 border-b border-border/50">
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 bg-primary text-primary-foreground flex items-center justify-center">
-            <Lock className="h-3 w-3" />
+          <div className="h-8 w-8 flex items-center justify-center">
+            <img src="/logo.png" alt="Logo" className="h-8 w-8 object-contain" />
           </div>
           <div>
             <h1 className="font-bold text-lg text-foreground tracking-tight">
