@@ -1,31 +1,109 @@
 import CryptoJS from 'crypto-js';
 
+// Helper for Base64 ArrayBuffer
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary_string = atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 export class EncryptionService {
-  private static deriveKey(masterPassword: string, salt: string): string {
+  // Legacy Crypto-JS fallback
+  private static legacyDeriveKey(masterPassword: string, salt: string): string {
     return CryptoJS.PBKDF2(masterPassword, salt, {
       keySize: 256 / 32,
       iterations: 10000,
     }).toString();
   }
 
-  static encrypt(plaintext: string, masterPassword: string): string {
-    const salt = CryptoJS.lib.WordArray.random(128 / 8).toString();
-    const key = this.deriveKey(masterPassword, salt);
-    const encrypted = CryptoJS.AES.encrypt(plaintext, key).toString();
-    return `${salt}:${encrypted}`;
+  private static legacyDecrypt(ciphertext: string, masterPassword: string): string {
+    const [salt, encrypted] = ciphertext.split(':');
+    if (!salt || !encrypted) throw new Error('Invalid legacy encrypted data format');
+    
+    const key = this.legacyDeriveKey(masterPassword, salt);
+    const decrypted = CryptoJS.AES.decrypt(encrypted, key);
+    const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+    
+    if (!plaintext) throw new Error('Legacy decryption failed');
+    return plaintext;
   }
 
-  static decrypt(ciphertext: string, masterPassword: string): string {
+  // Modern WebCrypto implementation
+  private static async getWebCryptoKey(masterPassword: string, salt: Uint8Array): Promise<CryptoKey> {
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(masterPassword),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits', 'deriveKey']
+    );
+
+    return crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 100000, // 100k iterations is much stronger
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  }
+
+  static async encrypt(plaintext: string, masterPassword: string): Promise<string> {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12)); // AES-GCM standard IV size
+    
+    const key = await this.getWebCryptoKey(masterPassword, salt);
+    
+    const encryptedBuffer = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv: iv
+      },
+      key,
+      new TextEncoder().encode(plaintext)
+    );
+
+    // Format: v2:salt:iv:ciphertext (all base64)
+    return `v2:${arrayBufferToBase64(salt)}:${arrayBufferToBase64(iv)}:${arrayBufferToBase64(encryptedBuffer)}`;
+  }
+
+  static async decrypt(ciphertext: string, masterPassword: string): Promise<string> {
     try {
-      const [salt, encrypted] = ciphertext.split(':');
-      if (!salt || !encrypted) throw new Error('Invalid encrypted data format');
+      // Check if it's the new v2 format
+      if (ciphertext.startsWith('v2:')) {
+        const [, saltB64, ivB64, encryptedB64] = ciphertext.split(':');
+        const salt = new Uint8Array(base64ToArrayBuffer(saltB64));
+        const iv = new Uint8Array(base64ToArrayBuffer(ivB64));
+        const encryptedBuffer = base64ToArrayBuffer(encryptedB64);
+
+        const key = await this.getWebCryptoKey(masterPassword, salt);
+        const decryptedBuffer = await crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv: iv },
+          key,
+          encryptedBuffer
+        );
+        return new TextDecoder().decode(decryptedBuffer);
+      }
       
-      const key = this.deriveKey(masterPassword, salt);
-      const decrypted = CryptoJS.AES.decrypt(encrypted, key);
-      const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-      
-      if (!plaintext) throw new Error('Decryption failed');
-      return plaintext;
+      // Fallback to legacy
+      return this.legacyDecrypt(ciphertext, masterPassword);
     } catch (error) {
       console.error('Decryption error:', error);
       throw new Error('Failed to decrypt data. Invalid master password or corrupted data.');

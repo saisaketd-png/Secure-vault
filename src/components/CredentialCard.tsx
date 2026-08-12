@@ -29,7 +29,7 @@ export function CredentialCard({ credential, onEdit, onDelete, onToggleFavorite 
   const [showPassword, setShowPassword] = useState(false);
   const [decryptedPassword, setDecryptedPassword] = useState<string | null>(null);
 
-  const handleShowPassword = () => {
+  const handleShowPassword = async () => {
     if (!masterPassword) {
       toast.error('Master password not available');
       return;
@@ -37,7 +37,7 @@ export function CredentialCard({ credential, onEdit, onDelete, onToggleFavorite 
 
     if (!showPassword) {
       try {
-        const decrypted = EncryptionService.decrypt(credential.encrypted_password, masterPassword);
+        const decrypted = await EncryptionService.decrypt(credential.encrypted_password, masterPassword);
         setDecryptedPassword(decrypted);
         setShowPassword(true);
       } catch (error) {
@@ -63,7 +63,7 @@ export function CredentialCard({ credential, onEdit, onDelete, onToggleFavorite 
     }
 
     try {
-      const decrypted = EncryptionService.decrypt(credential.encrypted_password, masterPassword);
+      const decrypted = await EncryptionService.decrypt(credential.encrypted_password, masterPassword);
       await navigator.clipboard.writeText(decrypted);
       toast.success('Password copied');
     } catch (error) {

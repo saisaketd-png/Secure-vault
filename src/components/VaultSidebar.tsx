@@ -24,13 +24,14 @@ import {
 } from 'lucide-react';
 
 interface VaultSidebarProps {
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
-  categoryCounts: Record<string, number>;
+  selectedCategory?: string;
+  onCategoryChange?: (category: string) => void;
+  categoryCounts?: Record<string, number>;
   onGeneratorClick?: () => void;
   onBreachCheckerClick?: () => void;
   isPhotoVault?: boolean;
   isDocumentVault?: boolean;
+  isHealthVault?: boolean;
 }
 
 const credentialCategoryIcons: Record<string, React.ReactNode> = {
@@ -73,13 +74,14 @@ const photoCategories = ['All', 'Favorites', 'Personal', 'Family', 'Work', 'Trav
 const documentCategories = ['All', 'Favorites', 'Personal', 'Work', 'Financial', 'Legal', 'Medical', 'Education', 'Other'];
 
 export function VaultSidebar({ 
-  selectedCategory, 
-  onCategoryChange, 
-  categoryCounts,
+  selectedCategory = 'All', 
+  onCategoryChange = () => {}, 
+  categoryCounts = {},
   onGeneratorClick,
   onBreachCheckerClick,
   isPhotoVault = false,
-  isDocumentVault = false
+  isDocumentVault = false,
+  isHealthVault = false
 }: VaultSidebarProps) {
   const navigate = useNavigate();
   const categories = isDocumentVault ? documentCategories : isPhotoVault ? photoCategories : credentialCategories;
@@ -105,11 +107,12 @@ export function VaultSidebar({
 
       <ScrollArea className="flex-1 px-3">
         <div className="space-y-6 py-4">
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground px-3 mb-2">
-              Categories
-            </p>
-            <div className="space-y-[2px]">
+          {!isHealthVault && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground px-3 mb-2">
+                Categories
+              </p>
+              <div className="space-y-[2px]">
               {categories.map((category) => {
                 const isActive = selectedCategory === category;
                 return (
@@ -137,8 +140,9 @@ export function VaultSidebar({
                   </Button>
                 );
               })}
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <p className="text-xs font-semibold text-muted-foreground px-3 mb-2">
@@ -159,9 +163,10 @@ export function VaultSidebar({
                 <>
                   <NavButton icon={<ImageIcon />} label="Photo Vault" onClick={() => navigate('/photos')} />
                   <NavButton icon={<FileText />} label="Document Vault" onClick={() => navigate('/documents')} />
+                  <NavButton icon={<ShieldCheck />} label="Vault Health" onClick={() => navigate('/health')} />
                   <NavButton icon={<BookOpen />} label="Security Articles" onClick={() => navigate('/articles')} />
-                  <NavButton icon={<RefreshCw />} label="Generator" onClick={onGeneratorClick} />
-                  <NavButton icon={<Shield />} label="Check Breach" onClick={onBreachCheckerClick} />
+                  {onGeneratorClick && <NavButton icon={<RefreshCw />} label="Generator" onClick={onGeneratorClick} />}
+                  {onBreachCheckerClick && <NavButton icon={<Shield />} label="Check Breach" onClick={onBreachCheckerClick} />}
                 </>
               )}
             </div>

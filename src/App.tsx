@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Vault from "./pages/Vault";
 import PhotoVault from "./pages/PhotoVault";
 import DocumentVault from "./pages/DocumentVault";
+import VaultHealth from "./pages/VaultHealth";
 import Profile from "./pages/Profile";
 import Articles from "./pages/Articles";
 import ArticleDetail from "./pages/ArticleDetail";
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/vault" element={<Vault />} />
               <Route path="/photos" element={<PhotoVault />} />
               <Route path="/documents" element={<DocumentVault />} />
+              <Route path="/health" element={<VaultHealth />} />
               <Route path="/articles" element={<Articles />} />
               <Route path="/articles/:slug" element={<ArticleDetail />} />
               <Route path="/profile" element={<Profile />} />

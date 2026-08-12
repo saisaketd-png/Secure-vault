@@ -55,7 +55,8 @@ export default function Vault() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
+  const [editingCredentialData, setEditingCredentialData] = useState<any>(null);
+  const [editingCredentialId, setEditingCredentialId] = useState<string | null>(null);
   const [generatorOpen, setGeneratorOpen] = useState(false);
   const [breachCheckerOpen, setBreachCheckerOpen] = useState(false);
   const [chatbotOpen, setChatbotOpen] = useState(false);
@@ -139,9 +140,9 @@ export default function Vault() {
     }
 
     try {
-      const encryptedPassword = EncryptionService.encrypt(formData.password, masterPassword);
+      const encryptedPassword = await EncryptionService.encrypt(formData.password, masterPassword);
 
-      if (editingCredential) {
+      if (editingCredentialId) {
         const { error } = await supabase
           .from('credentials')
           .update({
@@ -152,7 +153,7 @@ export default function Vault() {
             notes: formData.notes || null,
             category: formData.category,
           })
-          .eq('id', editingCredential.id);
+          .eq('id', editingCredentialId);
 
         if (error) throw error;
         toast.success('Credential updated successfully');
@@ -172,7 +173,8 @@ export default function Vault() {
       }
 
       await fetchCredentials();
-      setEditingCredential(null);
+      setEditingCredentialData(null);
+      setEditingCredentialId(null);
     } catch (error: any) {
       toast.error('Failed to save credential');
       console.error(error);
@@ -217,34 +219,43 @@ export default function Vault() {
     }
   };
 
-  const handleEdit = (credential: Credential) => {
+  const handleEdit = async (credential: Credential) => {
     if (!masterPassword) {
       toast.error('Master password not available');
       return;
     }
 
     try {
-      // Just verifying we can decrypt it before opening edit
-      EncryptionService.decrypt(credential.encrypted_password, masterPassword);
-      setEditingCredential(credential);
+      const password = await EncryptionService.decrypt(credential.encrypted_password, masterPassword);
+      setEditingCredentialId(credential.id);
+      setEditingCredentialData({
+        title: credential.title,
+        website_url: credential.website_url || '',
+        username: credential.username || '',
+        password,
+        notes: credential.notes || '',
+        category: credential.category,
+      });
       setDialogOpen(true);
     } catch (error) {
       toast.error('Failed to decrypt password');
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!masterPassword) {
       toast.error('Master password not available');
       return;
     }
 
     try {
-      const exportData = credentials.map(c => ({
-        ...c,
-        password: EncryptionService.decrypt(c.encrypted_password, masterPassword),
-        encrypted_password: undefined,
-      }));
+      const exportData = await Promise.all(
+        credentials.map(async (c) => ({
+          ...c,
+          password: await EncryptionService.decrypt(c.encrypted_password, masterPassword),
+          encrypted_password: undefined,
+        }))
+      );
 
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -410,23 +421,13 @@ export default function Vault() {
         open={dialogOpen}
         onOpenChange={(open) => {
           setDialogOpen(open);
-          if (!open) setEditingCredential(null);
+          if (!open) {
+            setEditingCredentialData(null);
+            setEditingCredentialId(null);
+          }
         }}
         onSave={handleSaveCredential}
-        initialData={
-          editingCredential
-            ? {
-                title: editingCredential.title,
-                website_url: editingCredential.website_url || '',
-                username: editingCredential.username || '',
-                password: masterPassword
-                  ? EncryptionService.decrypt(editingCredential.encrypted_password, masterPassword)
-                  : '',
-                notes: editingCredential.notes || '',
-                category: editingCredential.category,
-              }
-            : null
-        }
+        initialData={editingCredentialData}
       />
 
       <Dialog open={generatorOpen} onOpenChange={setGeneratorOpen}>
